@@ -1,0 +1,9 @@
+scipy
+scikit-image
+matplotlib
+rasterio
+skan
+tqdm
+shapely
+opencv-contrib-python
+pyshp
