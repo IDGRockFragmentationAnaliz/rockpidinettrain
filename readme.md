@@ -16,4 +16,4 @@ pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu13
 ```
 
 # Dataset
-https://disk.yandex.ru/d/uvB43D7ybMJPjA
+Данные обнажений горных пород [[скачать](https://disk.yandex.ru/d/uvB43D7ybMJPjA)]
