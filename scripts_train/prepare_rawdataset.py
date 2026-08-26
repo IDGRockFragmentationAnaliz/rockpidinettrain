@@ -3,9 +3,10 @@ from tqdm import tqdm
 from rocknetmanager import DatasetPathList
 
 
-def create_lst(root_path: str | Path, save_name: str = "raw_dataset.lst"):
+def create_lst(root_path: str | Path, path_dataset = None, save_name: str = "raw_dataset.lst"):
     root_path = Path(root_path).resolve()
-    path_dataset = root_path / r"handmark"
+    if path_dataset is None:
+        path_dataset = root_path / r"handmark"
 
     if not path_dataset.exists():
         raise FileNotFoundError(f"Папка не найдена: {path_dataset}")
@@ -23,8 +24,12 @@ def create_lst(root_path: str | Path, save_name: str = "raw_dataset.lst"):
             continue
         sample_name = sample_dir.name
 
+        # image_path = sample_dir / f"{sample_name}.png"
+        # label_path = sample_dir / f"traces"
+        # mask_path = sample_dir / "areas"
+
         image_path = sample_dir / f"{sample_name}.png"
-        label_path = sample_dir / f"traces"
+        label_path = sample_dir / f"{sample_name}_edges_thin_original.png"
         mask_path = sample_dir / "areas"
 
         if not image_path.exists():
@@ -54,5 +59,6 @@ def create_lst(root_path: str | Path, save_name: str = "raw_dataset.lst"):
 
 
 if __name__ == "__main__":
-    root = r"D:\Data\Outcrops"
-    create_lst(root)
+    root = Path(r"D:\Data\Outcrops")
+    path_dataset = root / "unmark"
+    create_lst(root, path_dataset=path_dataset)

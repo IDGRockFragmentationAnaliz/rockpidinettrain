@@ -45,7 +45,7 @@ class Storage:
     def save_grayscale(
         self,
         image: np.ndarray,
-        suffix: str,
+        suffix: str = "",
         ext: str = "png",
     ) -> None:
         """Сохраняет изображение как ``<base_name><suffix>.<ext>``."""
