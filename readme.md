@@ -1,3 +1,5 @@
+# rockdata
+## Install
 ```cli
 git submodule update --init --recursive
 ```
@@ -12,3 +14,6 @@ pip install -r requirements.txt
 pip insatall pytorch
 pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu130
 ```
+
+# Dataset
+https://disk.yandex.ru/d/uvB43D7ybMJPjA
