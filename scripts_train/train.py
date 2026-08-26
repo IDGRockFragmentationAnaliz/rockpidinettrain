@@ -25,7 +25,6 @@ from rocknetmanager.save_checkpoint import save_checkpoint
 
 
 def main():
-    #path_lst = Path('D:/1.ToSaver/profileimages/NYUD/image-train.lst')
     path_lst = Path("D:/1.ToSaver/profileimages/train_data/train.lst")
     data = Dataset(path_lst=path_lst)
 

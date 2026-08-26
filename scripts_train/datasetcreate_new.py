@@ -11,10 +11,11 @@ from rocknetmanager.sample_transform import Rotate, horizontal_flip
 
 
 RAW_MANIFEST_PATHS = (
-	Path(r"D:\Data\Outcrops\dataset_raw.lst"),
-	Path(r"D:\Data\Outcrops\dataset_selftrain.lst"),
+	Path(r"D:\Data\Outcrops\raw_dataset.lst"),
+	# Path(r"D:\Data\Outcrops\dataset_selftrain.lst"),
 )
 OUTPUT_FOLDER = Path(r"D:\Data\train_data")
+OUTPUT_LST_PATH = Path(r"D:\Data\Outcrops\train.lst")
 
 TILE_SIZE = (512, 512)
 TILE_STRIDE = (337, 337)
@@ -50,6 +51,7 @@ def main() -> None:
 	saved_count, skipped_count = create_dataset(
 		samples=samples,
 		output_folder=OUTPUT_FOLDER,
+		output_lst_path=OUTPUT_LST_PATH,
 		tile_size=TILE_SIZE,
 		tile_stride=TILE_STRIDE,
 		rotation_angles=ROTATION_ANGLES,
@@ -66,6 +68,7 @@ def main() -> None:
 	)
 	print(f"Пропущено пустых или недоступных тайлов: {skipped_count}")
 	print(f"Датасет сохранён в: {OUTPUT_FOLDER}")
+	print(f"Список датасета сохранён в: {OUTPUT_LST_PATH}")
 
 
 def load_manifest(
@@ -157,6 +160,7 @@ def resolve_path(root_path: Path, value: str) -> Path:
 def create_dataset(
 	samples: Sequence[SamplePaths],
 	output_folder: Path,
+	output_lst_path: Path,
 	tile_size: tuple[int, int],
 	tile_stride: tuple[int, int],
 	rotation_angles: tuple[int, ...] = (0,),
@@ -175,6 +179,8 @@ def create_dataset(
 
 	output_folder = Path(output_folder)
 	output_folder.mkdir(parents=True, exist_ok=True)
+	output_lst_path = Path(output_lst_path).resolve()
+	output_lst_path.parent.mkdir(parents=True, exist_ok=True)
 
 	tiler = Tiler(
 		size=tile_size,
@@ -183,47 +189,70 @@ def create_dataset(
 	saved_count = 0
 	skipped_count = 0
 
-	progress = tqdm(
-		samples,
-		desc="Подготовка датасета",
-		unit="sample",
-		dynamic_ncols=True,
-	)
-
-	for sample_paths in progress:
-		progress.set_postfix_str(sample_paths.image.stem)
-
-		sample = Sample.load_sample(
-			sample_paths.as_dict(),
-			thickness=label_thickness,
+	with output_lst_path.open(
+		"w",
+		encoding="utf-8",
+		newline="",
+		buffering=1,
+	) as output_lst:
+		lst_writer = csv.writer(
+			output_lst,
+			delimiter="\t",
+			lineterminator="\n",
 		)
 
-		for transformed, angle, is_flipped in iter_sample_variants(
-			sample=sample,
-			rotation_angles=rotation_angles,
-			include_horizontal_flip=include_horizontal_flip,
-		):
-			for tile, top, left in tiler.iter_with_coordinates(transformed):
-				if not is_accessible_tile(
-					tile,
-					min_mask_fraction=min_mask_fraction,
-					min_label_pixels=min_label_pixels,
-				):
-					skipped_count += 1
-					continue
+		progress = tqdm(
+			samples,
+			desc="Подготовка датасета",
+			unit="sample",
+			dynamic_ncols=True,
+		)
 
-				tile_name = (
-					f"{sample_paths.name}_"
-					f"r{angle:03d}_f{int(is_flipped)}_"
-					f"y{top:05d}_x{left:05d}"
-				)
+		for sample_paths in progress:
+			progress.set_postfix_str(sample_paths.image.stem)
+			sample_output_folder = (
+				output_folder / sample_paths.image.parent.name
+			)
 
-				save_tile(
-					tile=tile,
-					output_folder=output_folder,
-					tile_name=tile_name,
-				)
-				saved_count += 1
+			sample = Sample.load_sample(
+				sample_paths.as_dict(),
+				thickness=label_thickness,
+			)
+			sample["image"].masked_fill_(
+				sample["mask"] == 0,
+				0,
+			)
+
+			for transformed, angle, is_flipped in iter_sample_variants(
+				sample=sample,
+				rotation_angles=rotation_angles,
+				include_horizontal_flip=include_horizontal_flip,
+			):
+				for tile, top, left in tiler.iter_with_coordinates(transformed):
+					if not is_accessible_tile(
+						tile,
+						min_mask_fraction=min_mask_fraction,
+						min_label_pixels=min_label_pixels,
+					):
+						skipped_count += 1
+						continue
+
+					tile_name = (
+						f"{sample_paths.name}_"
+						f"r{angle:03d}_f{int(is_flipped)}_"
+						f"y{top:05d}_x{left:05d}"
+					)
+
+					image_path, label_path = save_tile(
+						tile=tile,
+						output_folder=sample_output_folder,
+						tile_name=tile_name,
+					)
+					lst_writer.writerow((
+						image_path.resolve().as_posix(),
+						label_path.resolve().as_posix(),
+					))
+					saved_count += 1
 
 	return saved_count, skipped_count
 
