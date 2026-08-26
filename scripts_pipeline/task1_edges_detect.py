@@ -5,6 +5,7 @@ import torch
 from rockedgesdetectors import Cropper, ModelRCF, NumpyImagenetAdapter
 from rockedgesdetectors.pidinet.config import config_model
 from rockedgesdetectors.pidinet.models import PiDiNet
+from rocknetmanager.manager_shapefile import label_load
 from storage_manager import Storage
 import matplotlib.pyplot as plt
 
@@ -15,6 +16,8 @@ def main():
 	# image_path = Path("../test_images/test_01.png")
 
 	image_path = Path(r"D:\Data\Outcrops\handmark\IMGP0146\IMGP0146.png")
+	vector_path = Path(r"D:\Data\Outcrops\handmark\IMGP0146")
+
 	# storage = Storage.from_folder_path(image_path)
 	storage = Storage.from_image_path(image_path)
 
@@ -23,13 +26,16 @@ def main():
 	model = Cropper(model, crop=512, pad=64)
 	edges = model(image)
 
-	fig = plt.figure(figsize=(14, 9))
-	axs = [fig.add_subplot(1, 2, 1),fig.add_subplot(1, 2, 2)]
-	axs[0].imshow(image)
-	axs[1].imshow(edges)
-	plt.show()
 
-	#storage.save_edges(edges)
+
+
+	# fig = plt.figure(figsize=(14, 9))
+	# axs = [fig.add_subplot(1, 2, 1),fig.add_subplot(1, 2, 2)]
+	# axs[0].imshow(image)
+	# axs[1].imshow(edges)
+	# plt.show()
+
+	storage.save_edges(edges)
 
 
 def create_pidinet_adapter(checkpoint_path):
