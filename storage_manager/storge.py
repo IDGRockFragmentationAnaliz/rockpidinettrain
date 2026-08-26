@@ -32,9 +32,9 @@ class Storage:
         return edges
 
 
-    def save_thin_edges(self, edges: np.ndarray, ext="png") -> None:
+    def save_thin_edges(self, edges: np.ndarray, suffix="_thin_edges", ext="png") -> None:
         if self.thin_edges_path is None:
-            self.thin_edges_path = self.folder_path / (self.base_name + "_thin_edges")
+            self.thin_edges_path = self.folder_path / (self.base_name + suffix)
 
         ext = "." + ext.lstrip(".")
         if not self.is_valid_extension(ext):
