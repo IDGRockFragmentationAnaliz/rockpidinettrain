@@ -1,8 +1,11 @@
-import cv2
-import numpy as np
 from pathlib import Path
 from typing import Self
+
+import cv2
+import numpy as np
+
 from . import image_formatter
+
 
 class Storage:
     IMAGE_SUFFIXES = (".png", ".jpg", ".jpeg", ".bmp", ".tif", ".tiff", ".pgm",
@@ -16,69 +19,66 @@ class Storage:
         self.edges_path: Path | None = None
         self.thin_edges_path: Path | None = None
 
-    def load_thin_edges(self, suffix="_thin_edges", ext: str = "png") -> np.ndarray:
-        if self.thin_edges_path is None:
-            self.thin_edges_path = self.folder_path / (self.base_name + suffix)
+    def load_grayscale(
+        self,
+        suffix: str,
+        ext: str = "png",
+    ) -> np.ndarray:
+        """Загружает ``<base_name><suffix>.<ext>`` в градациях серого."""
+        if self.folder_path is None:
+            raise ValueError("folder_path is not set")
+        if not self.base_name:
+            raise ValueError("base_name is not set")
 
         ext = "." + ext.lstrip(".")
         if not self.is_valid_extension(ext):
             raise ValueError(f"Invalid extension: {ext}")
-        out_path = self.thin_edges_path.with_suffix(ext)
 
-        edges = cv2.imread(str(out_path), cv2.IMREAD_GRAYSCALE)
-        if edges is None:
+        out_path = self.folder_path / f"{self.base_name}{suffix}{ext}"
+
+        image = cv2.imread(str(out_path), cv2.IMREAD_GRAYSCALE)
+        if image is None:
             raise FileNotFoundError(f"cv2.imread() failed for: {out_path}")
-        edges = image_formatter.uint8_normalize(edges)
-        return edges
 
+        return image_formatter.uint8_normalize(image)
 
-    def save_thin_edges(self, edges: np.ndarray, suffix="_thin_edges", ext="png") -> None:
-        if self.thin_edges_path is None:
-            self.thin_edges_path = self.folder_path / (self.base_name + suffix)
+    def save_grayscale(
+        self,
+        image: np.ndarray,
+        suffix: str,
+        ext: str = "png",
+    ) -> None:
+        """Сохраняет изображение как ``<base_name><suffix>.<ext>``."""
+        if self.folder_path is None:
+            raise ValueError("folder_path is not set")
+        if not self.base_name:
+            raise ValueError("base_name is not set")
 
         ext = "." + ext.lstrip(".")
         if not self.is_valid_extension(ext):
             raise ValueError(f"Invalid extension: {ext}")
-        out_path = self.thin_edges_path.with_suffix(ext)
 
-        edges = image_formatter.uint8_normalize(edges)
-        ok = cv2.imwrite(str(out_path), edges)
+        out_path = self.folder_path / f"{self.base_name}{suffix}{ext}"
+        image = image_formatter.uint8_normalize(image)
+
+        ok = cv2.imwrite(str(out_path), image)
         if not ok:
             raise IOError(f"cv2.imwrite failed for: {out_path}")
+
         if self.debug:
-            print("Thin edges saved:", out_path)
+            print("Grayscale image saved:", out_path)
 
+    def load_thin_edges(self, ext: str = "png") -> np.ndarray:
+        return self.load_grayscale(suffix="_thin_edges", ext=ext)
 
+    def save_thin_edges(self, edges: np.ndarray, ext: str = "png",) -> None:
+        self.save_grayscale(edges, suffix="_thin_edges", ext=ext)
 
     def load_edges(self, ext: str = "png") -> np.ndarray:
-        if self.edges_path is None:
-            self.edges_path = self.folder_path / (self.base_name + "_edges")
+        return self.load_grayscale(suffix="_edges", ext=ext)
 
-        ext = "." + ext.lstrip(".")
-        if not self.is_valid_extension(ext):
-            raise ValueError(f"Invalid extension: {ext}")
-        out_path = self.edges_path.with_suffix(ext)
-
-        edges = cv2.imread(str(out_path), cv2.IMREAD_GRAYSCALE)
-        if edges is None:
-            raise FileNotFoundError(f"cv2.imread() failed for: {out_path}")
-        edges = image_formatter.uint8_normalize(edges)
-        return edges
-
-
-    def save_edges(self, edges: np.ndarray, ext="png") -> None:
-        if self.edges_path is None:
-            self.edges_path = self.folder_path / (self.base_name + "_edges")
-
-        ext = "." + ext.lstrip(".")
-        if not self.is_valid_extension(ext):
-            raise ValueError(f"Invalid extension: {ext}")
-        out_path = self.edges_path.with_suffix(ext)
-
-        edges = image_formatter.uint8_normalize(edges)
-        ok = cv2.imwrite(str(out_path), edges)
-        if not ok:
-            raise IOError(f"cv2.imwrite failed for: {out_path}")
+    def save_edges(self, edges: np.ndarray, ext: str = "png") -> None:
+        self.save_grayscale(edges, suffix="_edges", ext=ext)
 
     def load_image(self, size=None):
         self.image_path = self._resolve_image_path()
