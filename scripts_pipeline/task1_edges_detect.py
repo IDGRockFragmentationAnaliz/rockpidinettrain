@@ -1,48 +1,67 @@
-import cv2
 from pathlib import Path
-import numpy as np
-import matplotlib.pyplot as plt
-import torch.cuda
 
-from rockedgesdetectors import ModelPiDiNet, ModelRCF, Cropper
-from storage_manager import save_edges, save_edges_path, get_image_from_path, get_image_from_folder
+import torch
+
+from rockedgesdetectors import Cropper, ModelRCF, NumpyImagenetAdapter
+from rockedgesdetectors.pidinet.config import config_model
+from rockedgesdetectors.pidinet.models import PiDiNet
 from storage_manager import Storage
+import matplotlib.pyplot as plt
+
+
+def create_pidinet_adapter(checkpoint_path):
+	module = PiDiNet(60, config_model("carv4"), dil=24, sa=True)
+	module = torch.nn.DataParallel(module).cuda()
+	checkpoint = torch.load(checkpoint_path, map_location="cuda")
+	module.load_state_dict(checkpoint["state_dict"])
+	return NumpyImagenetAdapter(
+		module,
+		output_selector=lambda outputs: outputs[-1],
+	)
+
 
 models = {
 	"pidinet_5": {
-		"model": ModelPiDiNet,
+		"factory": create_pidinet_adapter,
 		"checkpoint_path": "../models/pidinetmodels/table5_pidinet.pth"
 	},
 	"pidinet_7": {
-		"model": ModelPiDiNet,
+		"factory": create_pidinet_adapter,
 		"checkpoint_path": "../models/pidinetmodels/table7_pidinet.pth"
 	},
 	"pidinet_rock": {
-		"model": ModelPiDiNet,
+		"factory": create_pidinet_adapter,
 		"checkpoint_path": "../save_models/checkpoint_000.pth"
 	},
 	"rcf": {
-		"model": ModelRCF,
+		"factory": ModelRCF,
 		"checkpoint_path": "../models/RCFcheckpoint_epoch12.pth"
 	},
 }
 
+
 def main():
-	model_name = "pidinet_rock"
+	checkpoint_path = "../models/table7_pidinet.pth"
 	# image_path = Path("../test_images/test_01.png")
 
-	image_path = Path("/media/koladik/HardDisk/segment_picture/20180811_191241")
-	storage = Storage.from_folder_path(image_path)
-	# storage = Storage.from_image_path(image_path)
+	image_path = Path(r"D:\Data\Outcrops\handmark\IMGP0146\IMGP0146.png")
+	# storage = Storage.from_folder_path(image_path)
+	storage = Storage.from_image_path(image_path)
 
 	image = storage.load_image()
-	model = get_model(model_name)
+	model = create_pidinet_adapter(checkpoint_path)
 	model = Cropper(model, crop=512, pad=64)
 	edges = model(image)
-	storage.save_edges(edges)
 
-def get_model(name):
-	return models[name]["model"](models[name]["checkpoint_path"])
+
+	fig = plt.figure(figsize=(14, 9))
+	axs = [fig.add_subplot(1, 2, 1),fig.add_subplot(1, 2, 2)]
+	axs[0].imshow(image)
+	axs[1].imshow(edges)
+	plt.show()
+
+	#storage.save_edges(edges)
+
 
 if __name__ == "__main__":
 	main()
