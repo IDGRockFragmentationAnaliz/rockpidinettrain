@@ -9,36 +9,6 @@ from storage_manager import Storage
 import matplotlib.pyplot as plt
 
 
-def create_pidinet_adapter(checkpoint_path):
-	module = PiDiNet(60, config_model("carv4"), dil=24, sa=True)
-	module = torch.nn.DataParallel(module).cuda()
-	checkpoint = torch.load(checkpoint_path, map_location="cuda")
-	module.load_state_dict(checkpoint["state_dict"])
-	return NumpyImagenetAdapter(
-		module,
-		output_selector=lambda outputs: outputs[-1],
-	)
-
-
-models = {
-	"pidinet_5": {
-		"factory": create_pidinet_adapter,
-		"checkpoint_path": "../models/pidinetmodels/table5_pidinet.pth"
-	},
-	"pidinet_7": {
-		"factory": create_pidinet_adapter,
-		"checkpoint_path": "../models/pidinetmodels/table7_pidinet.pth"
-	},
-	"pidinet_rock": {
-		"factory": create_pidinet_adapter,
-		"checkpoint_path": "../save_models/checkpoint_000.pth"
-	},
-	"rcf": {
-		"factory": ModelRCF,
-		"checkpoint_path": "../models/RCFcheckpoint_epoch12.pth"
-	},
-}
-
 
 def main():
 	checkpoint_path = "../models/table7_pidinet.pth"
@@ -53,7 +23,6 @@ def main():
 	model = Cropper(model, crop=512, pad=64)
 	edges = model(image)
 
-
 	fig = plt.figure(figsize=(14, 9))
 	axs = [fig.add_subplot(1, 2, 1),fig.add_subplot(1, 2, 2)]
 	axs[0].imshow(image)
@@ -62,6 +31,16 @@ def main():
 
 	#storage.save_edges(edges)
 
+
+def create_pidinet_adapter(checkpoint_path):
+	module = PiDiNet(60, config_model("carv4"), dil=24, sa=True)
+	module = torch.nn.DataParallel(module).cuda()
+	checkpoint = torch.load(checkpoint_path, map_location="cuda")
+	module.load_state_dict(checkpoint["state_dict"])
+	return NumpyImagenetAdapter(
+		module,
+		output_selector=lambda outputs: outputs[-1],
+	)
 
 if __name__ == "__main__":
 	main()
