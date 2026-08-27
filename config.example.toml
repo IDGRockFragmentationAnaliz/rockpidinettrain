@@ -1,0 +1,13 @@
+[dataset]
+raw_manifest_paths = [
+    "D:/Data/Outcrops/raw_dataset.lst",
+    # "D:/Data/Outcrops/dataset_selftrain.lst",
+]
+output_folder = "D:/Data/train_data"
+lst_path = "D:/Data/Outcrops/train.lst"
+
+[training]
+initial_checkpoint_path = "models/table7_pidinet.pth"
+checkpoint_folder = "save_models"
+test_image_folder = "test_images"
+test_output_folder = "train_test"

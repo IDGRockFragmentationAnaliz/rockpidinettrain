@@ -1,4 +1,5 @@
 import csv
+import tomllib
 from collections.abc import Iterator, Sequence
 from dataclasses import dataclass
 from pathlib import Path
@@ -10,12 +11,26 @@ from rocknetmanager import Sample, Tiler, save_tile
 from rocknetmanager.sample_transform import Rotate, horizontal_flip
 
 
-RAW_MANIFEST_PATHS = (
-	Path(r"D:\Data\Outcrops\raw_dataset.lst"),
-	# Path(r"D:\Data\Outcrops\dataset_selftrain.lst"),
+PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CONFIG_PATH = PROJECT_ROOT / "config.toml"
+
+
+def resolve_config_path(value: str) -> Path:
+	path = Path(value)
+	return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+with CONFIG_PATH.open("rb") as config_file:
+	PATH_CONFIG = tomllib.load(config_file)
+
+DATASET_CONFIG = PATH_CONFIG["dataset"]
+
+RAW_MANIFEST_PATHS = tuple(
+	resolve_config_path(value)
+	for value in DATASET_CONFIG["raw_manifest_paths"]
 )
-OUTPUT_FOLDER = Path(r"D:\Data\train_data")
-OUTPUT_LST_PATH = Path(r"D:\Data\Outcrops\train.lst")
+OUTPUT_FOLDER = resolve_config_path(DATASET_CONFIG["output_folder"])
+OUTPUT_LST_PATH = resolve_config_path(DATASET_CONFIG["lst_path"])
 
 TILE_SIZE = (512, 512)
 TILE_STRIDE = (337, 337)

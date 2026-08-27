@@ -1,4 +1,5 @@
 import time
+import tomllib
 from pathlib import Path
 
 import cv2
@@ -19,12 +20,33 @@ from rocknetmanager.train import ModelTrain
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CONFIG_PATH = PROJECT_ROOT / "config.toml"
 
-DATASET_LST_PATH = Path(r"D:\Data\train_data\train.lst")
-INITIAL_CHECKPOINT_PATH = PROJECT_ROOT / "models" / "table7_pidinet.pth"
-CHECKPOINT_FOLDER = PROJECT_ROOT / "save_models"
-TEST_IMAGE_FOLDER = PROJECT_ROOT / "test_images"
-TEST_OUTPUT_FOLDER = PROJECT_ROOT / "train_test"
+
+def resolve_config_path(value: str) -> Path:
+	path = Path(value)
+	return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+with CONFIG_PATH.open("rb") as config_file:
+	PATH_CONFIG = tomllib.load(config_file)
+
+DATASET_CONFIG = PATH_CONFIG["dataset"]
+TRAINING_CONFIG = PATH_CONFIG["training"]
+
+DATASET_LST_PATH = resolve_config_path(DATASET_CONFIG["lst_path"])
+INITIAL_CHECKPOINT_PATH = resolve_config_path(
+	TRAINING_CONFIG["initial_checkpoint_path"]
+)
+CHECKPOINT_FOLDER = resolve_config_path(
+	TRAINING_CONFIG["checkpoint_folder"]
+)
+TEST_IMAGE_FOLDER = resolve_config_path(
+	TRAINING_CONFIG["test_image_folder"]
+)
+TEST_OUTPUT_FOLDER = resolve_config_path(
+	TRAINING_CONFIG["test_output_folder"]
+)
 
 MODEL_CONFIG = "carv4"
 EPOCHS = 99
