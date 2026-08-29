@@ -11,3 +11,6 @@ initial_checkpoint_path = "models/table7_pidinet.pth"
 checkpoint_folder = "save_models"
 test_image_folder = "test_images"
 test_output_folder = "train_test"
+
+[preparation]
+folder_dataset = "D:/Data/Outcrops/unmark"
