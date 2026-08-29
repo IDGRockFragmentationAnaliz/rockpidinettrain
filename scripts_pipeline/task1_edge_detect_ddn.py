@@ -19,8 +19,9 @@ def main() -> None:
     model = NumpyDDNAdapter(module)
     model = Cropper(
         model,
-        crop=1024,
-        pad=256,
+        crop=512,
+        pad=128,
+        pad_mode="reflect",
         display=True,
     )
 
