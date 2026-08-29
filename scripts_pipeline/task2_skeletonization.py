@@ -10,9 +10,9 @@ def main():
 	dataset_path = Path(r"D:\Data\Outcrops\unmark")
 	for folder_path in dataset_path.iterdir():
 		storage = Storage.from_folder_path(folder_path)
-		edges = storage.load_grayscale(suffix="_edges_original")
-		edges_thin = couprie(edges, lam=5, threshold=128, progress=True)
-		storage.save_grayscale(edges_thin, suffix="_edges_thin_original")
+		edges = storage.load_grayscale(suffix="_edges")
+		edges_thin = couprie(edges, lam=20, threshold=128, progress=True)
+		storage.save_grayscale(edges_thin, suffix="_edges_thin")
 
 
 if __name__ == "__main__":

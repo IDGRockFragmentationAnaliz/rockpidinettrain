@@ -13,17 +13,17 @@ import matplotlib.pyplot as plt
 
 def main():
 	checkpoint_path = "../models/table7_pidinet.pth"
+	checkpoint_path = Path(r"D:\Data\Outcrops\models\save_models\checkpoint_000.pth")
 
 	model = create_pidinet_adapter(checkpoint_path)
 	model = Cropper(model, crop=512, pad=64)
 
-	#folder_path = Path(r"D:\Data\Outcrops\handmark\IMGP0146")
 	dataset_path = Path(r"D:\Data\Outcrops\unmark")
 	for folder_path in dataset_path.iterdir():
 		storage = Storage.from_folder_path(folder_path)
 		image = storage.load_image()
 		edges = model(image)
-		storage.save_grayscale(edges, suffix="_edges_original")
+		storage.save_grayscale(edges, suffix="_edges")
 
 
 def create_pidinet_adapter(checkpoint_path):

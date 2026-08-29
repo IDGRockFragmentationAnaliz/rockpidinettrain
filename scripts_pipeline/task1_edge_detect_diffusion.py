@@ -20,7 +20,7 @@ def main() -> None:
 	torch.manual_seed(42)
 	module = DiffusionEdgeBSDS(
 		checkpoint_path,
-		sampling_timesteps=1,
+		sampling_timesteps=5,
 	).cuda().eval()
 	model = NumpyDiffusionEdgeAdapter(module)
 	model = Cropper(
