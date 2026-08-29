@@ -1,5 +1,6 @@
 """Run the pure-PyTorch DDN-M36 BSDS500 model over the dataset."""
 
+import tomllib
 from pathlib import Path
 
 import torch
@@ -12,8 +13,13 @@ def main() -> None:
     project_path = Path(__file__).resolve().parents[1]
     config_path = project_path / "config.toml"
 
+    with config_path.open("rb") as config_file:
+        config = tomllib.load(config_file)
+    dataset_path = Path(config["preparation"]["folder_dataset"])
+    if not dataset_path.is_absolute():
+        dataset_path = project_path / dataset_path
+
     checkpoint_path = project_path / "models" / "ddn_bsds500.pth"
-    dataset_path = Path(r"D:\Data\Outcrops\unmark")
 
     module = DDNBSDS(checkpoint_path).cuda().eval()
     model = NumpyDDNAdapter(module)

@@ -1,5 +1,6 @@
 """Run the standard PyTorch DiffusionEdge BSDS model over the dataset."""
 
+import tomllib
 from pathlib import Path
 
 import torch
@@ -14,8 +15,15 @@ from storage_manager import Storage
 
 def main() -> None:
 	project_path = Path(__file__).resolve().parents[1]
+	config_path = project_path / "config.toml"
+
+	with config_path.open("rb") as config_file:
+		config = tomllib.load(config_file)
+	dataset_path = Path(config["preparation"]["folder_dataset"])
+	if not dataset_path.is_absolute():
+		dataset_path = project_path / dataset_path
+
 	checkpoint_path = project_path / "models" / "diffusion_edge_bsds.pt"
-	dataset_path = Path(r"D:\Data\Outcrops\unmark")
 
 	torch.manual_seed(42)
 	module = DiffusionEdgeBSDS(

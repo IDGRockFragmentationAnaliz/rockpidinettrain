@@ -1,3 +1,4 @@
+import tomllib
 from pathlib import Path
 
 import torch
@@ -12,13 +13,21 @@ import matplotlib.pyplot as plt
 
 
 def main():
+	project_path = Path(__file__).resolve().parents[1]
+	config_path = project_path / "config.toml"
+
+	with config_path.open("rb") as config_file:
+		config = tomllib.load(config_file)
+	dataset_path = Path(config["preparation"]["folder_dataset"])
+	if not dataset_path.is_absolute():
+		dataset_path = project_path / dataset_path
+
 	checkpoint_path = "../models/table7_pidinet.pth"
 	checkpoint_path = Path(r"D:\Data\Outcrops\models\save_models\checkpoint_000.pth")
 
 	model = create_pidinet_adapter(checkpoint_path)
 	model = Cropper(model, crop=512, pad=64)
 
-	dataset_path = Path(r"D:\Data\Outcrops\unmark")
 	for folder_path in dataset_path.iterdir():
 		storage = Storage.from_folder_path(folder_path)
 		image = storage.load_image()
