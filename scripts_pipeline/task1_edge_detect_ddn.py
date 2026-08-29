@@ -10,6 +10,8 @@ from storage_manager import Storage
 
 def main() -> None:
     project_path = Path(__file__).resolve().parents[1]
+    config_path = project_path / "config.toml"
+
     checkpoint_path = project_path / "models" / "ddn_bsds500.pth"
     dataset_path = Path(r"D:\Data\Outcrops\unmark")
 

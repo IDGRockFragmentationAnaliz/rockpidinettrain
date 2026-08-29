@@ -1,8 +1,0 @@
-{
-  "databases": [
-    "/media/koladik/HardDisk/data/SegmentationDatasets/datasets/data_outcrops",
-    "/media/koladik/HardDisk/data/SegmentationDatasets/datasets/Loviisa_database",
-    "/media/koladik/HardDisk/data/SegmentationDatasets/datasets/Matteo_database"
-  ],
-  "train_folder": "/media/koladik/HardDisk/data/SegmentationDatasets/prepared"
-}
