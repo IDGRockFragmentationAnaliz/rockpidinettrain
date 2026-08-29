@@ -3,3 +3,4 @@
 test_images
 config.toml
 /models/diffusion_edge_bsds.pt
+/train_test/*
