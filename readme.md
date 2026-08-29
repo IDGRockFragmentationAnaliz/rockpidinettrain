@@ -28,7 +28,8 @@ pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu13
 
 | Название | Год  | Статья                                                            | Github                                              |
 |----------|------|-------------------------------------------------------------------|-----------------------------------------------------|
-| PiDiNet  | 2021 |                                                                   | [GitHub](https://github.com/hellozhuo/pidinet)      |
-| CPD-Net | 2024 | [ссылка](linkinghub.elsevier.com/retrieve/pii/S0925231224019246)  | Не найдено                                        |
+| PiDiNet  | 2021 | [ссылка](https://openaccess.thecvf.com/content/ICCV2021/html/Su_Pixel_Difference_Networks_for_Efficient_Edge_Detection_ICCV_2021_paper.html) | [GitHub](https://github.com/hellozhuo/pidinet)      |
+| RCF | 2017 | [ссылка](https://openaccess.thecvf.com/content_cvpr_2017/html/Liu_Richer_Convolutional_Features_CVPR_2017_paper.html) | [GitHub](https://github.com/yun-liu/rcf) |
+| CPD-Net | 2024 | [ссылка](https://www.sciencedirect.com/science/article/pii/S0925231224019246) | Не найдено                                        |
 | DiffusionEdge | 2024 | [ссылка](https://doi.org/10.1609/aaai.v38i7.28490)                | [GitHub](https://github.com/GuHuangAI/DiffusionEdge) |
 |         |      |                                                                   |                                                     |
