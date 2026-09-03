@@ -12,5 +12,8 @@ checkpoint_folder = "save_models"
 test_image_folder = "test_images"
 test_output_folder = "train_test"
 
+[validation]
+validation_folder = "D:/Data/Outcrops/handmark"
+
 [preparation]
 folder_dataset = "D:/Data/Outcrops/unmark"
