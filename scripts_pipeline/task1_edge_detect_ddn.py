@@ -15,18 +15,19 @@ def main() -> None:
 
     with config_path.open("rb") as config_file:
         config = tomllib.load(config_file)
-    dataset_path = Path(config["preparation"]["folder_dataset"])
+    # dataset_path = Path(config["preparation"]["folder_dataset"])
+    dataset_path = Path(config["validation"]["folder_validation"])
     if not dataset_path.is_absolute():
         dataset_path = project_path / dataset_path
 
-    checkpoint_path = project_path / "models" / "ddn_bsds500.pth"
+    checkpoint_path = project_path / "models" / "models_ddn"  / "checkpoint_015.pth"
 
     module = DDNBSDS(checkpoint_path).cuda().eval()
     model = NumpyDDNAdapter(module)
     model = Cropper(
         model,
-        crop=512,
-        pad=128,
+        crop=350,
+        pad=50,
         pad_mode="reflect",
         display=True,
     )
@@ -41,7 +42,7 @@ def main() -> None:
         maximum = edges.max()
         if maximum > 0:
             edges /= maximum
-        storage.save_grayscale(edges, suffix="_edges_ddn")
+        storage.save_grayscale(edges, suffix="_edges_ddn12")
 
 
 if __name__ == "__main__":
