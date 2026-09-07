@@ -18,12 +18,13 @@ def main():
 
 	with config_path.open("rb") as config_file:
 		config = tomllib.load(config_file)
-	dataset_path = Path(config["preparation"]["folder_dataset"])
+	# dataset_path = Path(config["preparation"]["folder_dataset"])
+	dataset_path = Path(config["validation"]["folder_validation"])
 	if not dataset_path.is_absolute():
 		dataset_path = project_path / dataset_path
 
-	checkpoint_path = "../models/table7_pidinet.pth"
-	checkpoint_path = Path(r"D:\Data\Outcrops\models\save_models\checkpoint_000.pth")
+	checkpoint_path = "../models/models_pidinet/pidinet_1.pth"
+	#checkpoint_path = Path(r"D:\Data\Outcrops\models\save_models\checkpoint_000.pth")
 
 	model = create_pidinet_adapter(checkpoint_path)
 	model = Cropper(model, crop=512, pad=64)
@@ -32,7 +33,7 @@ def main():
 		storage = Storage.from_folder_path(folder_path)
 		image = storage.load_image()
 		edges = model(image)
-		storage.save_grayscale(edges, suffix="_edges")
+		storage.save_grayscale(edges, suffix="_edges_pidi_1")
 
 
 def create_pidinet_adapter(checkpoint_path):

@@ -2,6 +2,7 @@
 .idea
 test_images
 config.toml
+/models/*
 /models/diffusion_edge_bsds.pt
 /models/ddn_bsds500.pth
 /train_test/*

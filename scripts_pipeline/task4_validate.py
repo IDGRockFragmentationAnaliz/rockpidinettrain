@@ -21,7 +21,7 @@ def main():
 	mask_path = folder_instance / Path(r"areas")
 
 	storage = Storage.from_folder_path(folder_instance)
-	image_edges_thin = storage.load_thin_edges()
+	image_edges_thin = storage.load_grayscale(suffix="_thin_edges_ddn_1")
 	image_mask = mask_load(mask_path, image_edges_thin.shape)
 	image_edges_gt = label_load(
 		path=edges_gt_path,

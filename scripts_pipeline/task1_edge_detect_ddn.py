@@ -20,7 +20,7 @@ def main() -> None:
     if not dataset_path.is_absolute():
         dataset_path = project_path / dataset_path
 
-    checkpoint_path = project_path / "models" / "models_ddn"  / "checkpoint_015.pth"
+    checkpoint_path = project_path / "models" / "models_ddn"  / "ddn_outcrop_1.pth" # "ddn_bsds500.pth"
 
     module = DDNBSDS(checkpoint_path).cuda().eval()
     model = NumpyDDNAdapter(module)
@@ -38,11 +38,7 @@ def main() -> None:
         storage = Storage.from_folder_path(folder_path)
         image = storage.load_image()
         edges = model(image)
-        edges -= edges.min()
-        maximum = edges.max()
-        if maximum > 0:
-            edges /= maximum
-        storage.save_grayscale(edges, suffix="_edges_ddn12")
+        storage.save_grayscale(edges, suffix="_edges_ddn_1_2")
 
 
 if __name__ == "__main__":
