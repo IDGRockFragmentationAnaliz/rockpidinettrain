@@ -7,7 +7,7 @@ import numpy as np
 import torch
 from torch.utils.data import DataLoader, Subset
 
-from rockedgesdetectors import DDNBSDS
+from rockedgesdetectors import DDN
 from rockedgesdetectors.ddn.training import (
     DDNLoss,
     DDNTrainer,
@@ -63,7 +63,7 @@ def main() -> None:
     train_loader, validation_loader = create_loaders()
 
     source_checkpoint = RESUME_CHECKPOINT or INITIAL_CHECKPOINT
-    model = DDNBSDS(source_checkpoint, trainable=True).to(device)
+    model = DDN(source_checkpoint, trainable=True).to(device)
     optimizer = create_ddn_optimizer(
         model,
         learning_rate=LEARNING_RATE,
