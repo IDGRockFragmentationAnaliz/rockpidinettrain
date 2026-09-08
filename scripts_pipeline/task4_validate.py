@@ -1,104 +1,96 @@
 from pathlib import Path
 import tomllib
-import cv2
-import matplotlib.pyplot as plt
+
 import numpy as np
+import torch
+
 from pygradskeleton import couprie
-from storage_manager import Storage
+from rockedgesdetectors import Cropper
 from rocknetmanager.manager_shapefile import label_load, mask_load
-from rocknetmanager.metrics import boundary_f_score
+from rocknetmanager.metrics import boundary_f_score, panoptic_quality
+from scripts_pipeline.task1_edges_detect_pidi import create_pidinet_adapter
+from storage_manager import Storage
+from storage_manager.image_formatter import uint8_normalize
 
-def main():
-	project_path = Path(__file__).resolve().parents[1]
-	config_path = project_path / "config.toml"
-	with config_path.open("rb") as config_file:
-		config = tomllib.load(config_file)
 
-	folder_validation = Path(config["validation"]["folder_validation"])
+# Настройки
+MODEL_NAME = "bsds500"  # "128", "64" или "bsds500"
+CHECKPOINT_NUMBER = 1  # Не используется для модели "bsds500"
 
-	folder_instance = folder_validation / "IMGP3286"
-	edges_gt_path = folder_instance / Path(r"traces_gt\traces.shp")
-	mask_path = folder_instance / Path(r"areas")
+CROP_SIZE = 512
+PAD_SIZE = 128
+SKELETON_LAM = 5
+SKELETON_THRESHOLD = 128
+F_SCORE_TOLERANCE_PX = 3
 
-	storage = Storage.from_folder_path(folder_instance)
-	image_edges_thin = storage.load_grayscale(suffix="_thin_edges_ddn_1")
-	image_mask = mask_load(mask_path, image_edges_thin.shape)
-	image_edges_gt = label_load(
-		path=edges_gt_path,
-		shape=image_edges_thin.shape,
-		thickness=1
-	)
-	# image_edges_gt[image_mask == 0] = 0
-	# image_edges_thin[image_mask == 0] = 0
-	# f_score = boundary_f_score(edges_pred=image_edges_thin, edges_gt=image_edges_gt, tolerance_px=3)
-	# print(f_score)
 
-	test1, test2 = panoptic_quality(edges_pred=image_edges_thin, edges_gt=image_edges_gt)
+def get_checkpoint_path(project_path: Path) -> Path:
+    model_dir = project_path / "models" / "models_pidinet"
+    if MODEL_NAME == "bsds500":
+        return model_dir / "pidinet_bsds500.pth"
+    if MODEL_NAME not in {"128", "64"}:
+        raise ValueError(f"Неизвестная модель: {MODEL_NAME}")
+    return (
+        model_dir
+        / MODEL_NAME
+        / f"checkpoint_{CHECKPOINT_NUMBER:03d}_{MODEL_NAME}.pth"
+    )
 
-	fig = plt.figure(figsize=(14, 9))
-	axs = [fig.add_subplot(1, 2, 1), fig.add_subplot(1, 2, 2)]
-	axs[0].imshow(test1)
-	axs[1].imshow(test2)
-	axs[1].sharex(axs[0])
-	axs[1].sharey(axs[0])
-	plt.show()
+def main(*, use_pq: bool = False) -> None:
+    print("MODEL_NAME", "pidinet",MODEL_NAME,"CHECKPOINT",CHECKPOINT_NUMBER)
+    project_path = Path(__file__).resolve().parents[1]
+    with (project_path / "config.toml").open("rb") as config_file:
+        config = tomllib.load(config_file)
 
-	exit()
+    folder_validation = Path(config["validation"]["folder_validation"])
+    if not folder_validation.is_absolute():
+        folder_validation = project_path / folder_validation
 
-	fig = plt.figure(figsize=(14, 9))
-	axs = [fig.add_subplot(1, 2, 1),fig.add_subplot(1, 2, 2)]
-	axs[0].imshow(image_edges_thin)
-	axs[1].imshow(image_edges_gt)
-	plt.show()
+    checkpoint_path = get_checkpoint_path(project_path)
+    adapter = create_pidinet_adapter(checkpoint_path)
+    adapter.eval()
+    model = Cropper(adapter, crop=CROP_SIZE, pad=PAD_SIZE)
 
-def panoptic_quality(
-	edges_pred: np.ndarray,
-	edges_gt: np.ndarray,
-) -> tuple[np.ndarray, np.ndarray]:
-	"""Выделяет замкнутые области внутри предсказанных и эталонных границ.
+    scores: list[float] = []
+    folders = sorted(path for path in folder_validation.iterdir() if path.is_dir())
 
-	В выходных масках фон и сами границы имеют значение 0, а каждая
-	замкнутая область получает отдельный положительный целочисленный ID.
-	"""
-	if edges_pred.ndim != 2 or edges_gt.ndim != 2:
-		raise ValueError("Обе карты границ должны быть двумерными")
+    for folder in folders:
+        storage = Storage.from_folder_path(folder)
+        image = storage.load_image()
 
-	if edges_pred.shape != edges_gt.shape:
-		raise ValueError(
-			f"Размеры карт границ не совпадают: "
-			f"prediction={edges_pred.shape}, GT={edges_gt.shape}"
-		)
+        with torch.inference_mode():
+            edges = uint8_normalize(model(image))
 
-	def closed_objects(edges: np.ndarray) -> np.ndarray:
-		# Ненулевые пиксели считаются непроходимыми границами. 4-связность
-		# не позволяет фону просачиваться через диагональное касание линий.
-		background = (edges == 0).astype(np.uint8)
-		component_count, components = cv2.connectedComponents(
-			background,
-			connectivity=4,
-		)
+        edges_thin = couprie(
+            edges,
+            lam=SKELETON_LAM,
+            threshold=SKELETON_THRESHOLD,
+            progress=False,
+        )
+        image_mask = mask_load(folder / "areas", edges_thin.shape)
+        edges_gt = label_load(
+            path=folder / "traces_gt" / "traces.shp",
+            shape=edges_thin.shape,
+            thickness=1,
+        )
 
-		border_ids = np.unique(np.concatenate((
-			components[0, :],
-			components[-1, :],
-			components[:, 0],
-			components[:, -1],
-		)))
+        mask_value = 255 if use_pq else 0
+        edges_thin[image_mask == 0] = mask_value
+        edges_gt[image_mask == 0] = mask_value
 
-		closed_component_ids = np.setdiff1d(
-			np.arange(component_count),
-			np.append(border_ids, 0),
-		)
+        if use_pq:
+            score = panoptic_quality(pred=edges_thin, gt=edges_gt)
+        else:
+            score = boundary_f_score(
+                edges_pred=edges_thin,
+                edges_gt=edges_gt,
+                tolerance_px=F_SCORE_TOLERANCE_PX,
+            )
+        scores.append(score)
+        print(f"{folder.name}: {score:.9f}")
 
-		object_ids_by_component = np.zeros(component_count, dtype=np.int32)
-		object_ids_by_component[closed_component_ids] = np.arange(
-			1,
-			len(closed_component_ids) + 1,
-		)
+    print(f"Среднее: {float(np.mean(scores)):.9f}")
 
-		return object_ids_by_component[components]
-
-	return closed_objects(edges_pred), closed_objects(edges_gt)
 
 if __name__ == "__main__":
-	main()
+    main()
