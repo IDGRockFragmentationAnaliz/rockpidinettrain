@@ -1,14 +1,27 @@
 """Fine-tune RCF on image/edge[/mask] manifest pairs."""
 
+import tomllib
 from pathlib import Path
 
 from rockedgesdetectors.pyrcf.train import TrainingConfig, run_training
 
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+CONFIG_PATH = PROJECT_ROOT / "config.toml"
+
+
+def resolve_config_path(value: str) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+with CONFIG_PATH.open("rb") as config_file:
+    PATH_CONFIG = tomllib.load(config_file)
+
+TRAIN_MANIFEST_PATH = resolve_config_path(PATH_CONFIG["dataset"]["lst_path"])
 
 CONFIG = TrainingConfig(
-    train_manifest=Path(r"D:\Data\Outcrops\train.lst"),
+    train_manifest=TRAIN_MANIFEST_PATH,
     initial_checkpoint=PROJECT_ROOT / "models" / "bsds500_pascal_model.pth",
     resume_checkpoint=None,
     checkpoint_folder=PROJECT_ROOT / "save_models" / "rcf",

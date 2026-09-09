@@ -23,6 +23,7 @@ pip3 install torch torchvision --index-url https://download.pytorch.org/whl/cu13
 - Diffusion edge веса [[скачать](https://disk.yandex.ru/d/Lb3tlnHgS9bZJg)]
 - PidiNet веса [[скачать](https://disk.yandex.ru/d/JkKOMI9w-8VxSQ)]
 - DDN веса [[скачать](https://disk.yandex.ru/d/_DTFVdBNxTZ1hg)]
+- RSF веса [[скачать](https://disk.yandex.ru/d/1U1cGSx_MiGBEg)]
 
 ## Models
 
