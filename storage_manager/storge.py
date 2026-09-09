@@ -23,8 +23,9 @@ class Storage:
         self,
         suffix: str,
         ext: str = "png",
+        subfolder: str | Path | None = None,
     ) -> np.ndarray:
-        """Загружает ``<base_name><suffix>.<ext>`` в градациях серого."""
+        """Загружает карту из относительной subfolder, не создавая папку."""
         if self.folder_path is None:
             raise ValueError("folder_path is not set")
         if not self.base_name:
@@ -34,7 +35,7 @@ class Storage:
         if not self.is_valid_extension(ext):
             raise ValueError(f"Invalid extension: {ext}")
 
-        out_path = self.folder_path / f"{self.base_name}{suffix}{ext}"
+        out_path = self._resolve_subfolder(subfolder) / f"{self.base_name}{suffix}{ext}"
 
         image = cv2.imread(str(out_path), cv2.IMREAD_GRAYSCALE)
         if image is None:
@@ -47,8 +48,9 @@ class Storage:
         image: np.ndarray,
         suffix: str = "",
         ext: str = "png",
+        subfolder: str | Path | None = None,
     ) -> None:
-        """Сохраняет изображение как ``<base_name><suffix>.<ext>``."""
+        """Сохраняет карту, создавая относительную subfolder при необходимости."""
         if self.folder_path is None:
             raise ValueError("folder_path is not set")
         if not self.base_name:
@@ -58,8 +60,11 @@ class Storage:
         if not self.is_valid_extension(ext):
             raise ValueError(f"Invalid extension: {ext}")
 
-        out_path = self.folder_path / f"{self.base_name}{suffix}{ext}"
+        output_folder = self._resolve_subfolder(subfolder)
+        out_path = output_folder / f"{self.base_name}{suffix}{ext}"
         image = image_formatter.uint8_normalize(image)
+        if subfolder is not None:
+            output_folder.mkdir(parents=True, exist_ok=True)
 
         ok = cv2.imwrite(str(out_path), image)
         if not ok:
@@ -67,6 +72,22 @@ class Storage:
 
         if self.debug:
             print("Grayscale image saved:", out_path)
+
+    def _resolve_subfolder(self, subfolder: str | Path | None) -> Path:
+        if self.folder_path is None:
+            raise ValueError("folder_path is not set")
+        if subfolder is None:
+            return self.folder_path
+        if not isinstance(subfolder, (str, Path)):
+            raise TypeError("subfolder must be a str or Path")
+        relative = Path(subfolder)
+        if relative.is_absolute() or relative.anchor:
+            raise ValueError("subfolder must be a relative path")
+        base = self.folder_path.resolve()
+        target = (base / relative).resolve()
+        if not target.is_relative_to(base):
+            raise ValueError("subfolder must stay inside folder_path")
+        return target
 
     def load_thin_edges(self, ext: str = "png") -> np.ndarray:
         return self.load_grayscale(suffix="_thin_edges", ext=ext)
