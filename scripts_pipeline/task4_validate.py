@@ -5,7 +5,7 @@ import numpy as np
 import torch
 
 from pygradskeleton import couprie
-from rockedgesdetectors import Cropper
+from rockedgesdetectors import BatchedCropper
 from rocknetmanager.manager_shapefile import label_load, mask_load
 from rocknetmanager.metrics import boundary_f_score, panoptic_quality
 from scripts_pipeline.task1_edge_detect_ddn import load_model as create_ddn_adapter
@@ -22,6 +22,7 @@ PROGRESS = True  # Показывать прогресс обработки кр
 
 CROP_SIZE = 350
 PAD_SIZE = 150
+BATCH_NUM = 4  # Количество кропов в батче; 1 — обычная обработка
 SKELETON_LAM = 0
 SKELETON_THRESHOLD = 128
 F_SCORE_TOLERANCE_PX = 3
@@ -60,7 +61,13 @@ def main(*, use_pq: bool = False) -> None:
     else:
         adapter = create_pidinet_adapter(checkpoint_path)
     adapter.eval()
-    model = Cropper(adapter, crop=CROP_SIZE, pad=PAD_SIZE, display=PROGRESS)
+    model = BatchedCropper(
+        adapter,
+        crop=CROP_SIZE,
+        pad=PAD_SIZE,
+        display=PROGRESS,
+        batch_num=BATCH_NUM,
+    )
 
     scores: list[float] = []
     folders = sorted(path for path in folder_validation.iterdir() if path.is_dir())
