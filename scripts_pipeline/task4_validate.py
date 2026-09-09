@@ -17,7 +17,7 @@ from storage_manager.image_formatter import uint8_normalize
 # Настройки
 MODEL_TYPE = "ddn"  # "pidinet" или "ddn"
 MODEL_NAME = "bsds500"  # PiDiNet: "64", "128", "192", "bsds500"; DDN: "bsds500", "outcrop_1", ...
-CHECKPOINT_NUMBER = 1  # Только для PiDiNet, кроме "bsds500"
+CHECKPOINT_NUMBER = 1  # Для DDN и PiDiNet; не используется для PiDiNet "bsds500"
 PROGRESS = True  # Показывать прогресс обработки кропов и скелетизации
 
 CROP_SIZE = 350
@@ -30,7 +30,10 @@ F_SCORE_TOLERANCE_PX = 3
 
 def get_checkpoint_path(project_path: Path) -> Path:
     if MODEL_TYPE == "ddn":
-        return project_path / "models" / "models_ddn" / f"ddn_{MODEL_NAME}.pth"
+        return (
+            project_path / "models" / "models_ddn"
+            / MODEL_NAME / f"checkpoint_{CHECKPOINT_NUMBER:03d}.pth"
+        )
     if MODEL_TYPE != "pidinet":
         raise ValueError(f"Неизвестный тип модели: {MODEL_TYPE}")
 
