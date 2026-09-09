@@ -15,10 +15,10 @@ from storage_manager.image_formatter import uint8_normalize
 
 
 # Настройки
-PROGRESS = True  # Показывать прогресс обработки кропов и скелетизации
 MODEL_TYPE = "ddn"  # "pidinet" или "ddn"
 MODEL_NAME = "bsds500"  # PiDiNet: "64", "128", "192", "bsds500"; DDN: "bsds500", "outcrop_1", ...
 CHECKPOINT_NUMBER = 1  # Только для PiDiNet, кроме "bsds500"
+PROGRESS = True  # Показывать прогресс обработки кропов и скелетизации
 
 CROP_SIZE = 350
 PAD_SIZE = 150
