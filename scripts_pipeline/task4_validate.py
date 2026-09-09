@@ -14,11 +14,11 @@ from storage_manager.image_formatter import uint8_normalize
 
 
 # Настройки
-MODEL_NAME = "bsds500"  # "128", "64" или "bsds500"
+MODEL_NAME = "192"  # "128", "64", "192 или "bsds500"
 CHECKPOINT_NUMBER = 1  # Не используется для модели "bsds500"
 
-CROP_SIZE = 512
-PAD_SIZE = 128
+CROP_SIZE = 1024
+PAD_SIZE = 256
 SKELETON_LAM = 5
 SKELETON_THRESHOLD = 128
 F_SCORE_TOLERANCE_PX = 3
@@ -28,7 +28,7 @@ def get_checkpoint_path(project_path: Path) -> Path:
     model_dir = project_path / "models" / "models_pidinet"
     if MODEL_NAME == "bsds500":
         return model_dir / "pidinet_bsds500.pth"
-    if MODEL_NAME not in {"128", "64"}:
+    if MODEL_NAME not in {"64", "128", "192"}:
         raise ValueError(f"Неизвестная модель: {MODEL_NAME}")
     return (
         model_dir
