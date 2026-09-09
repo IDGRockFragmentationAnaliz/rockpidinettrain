@@ -7,3 +7,15 @@ config.toml
 /models/ddn_bsds500.pth
 /train_test/*
 /validation_results/*
+
+# Local tests and temporary files
+tests/
+test/
+scripts_pipeline_test/
+tmp/
+temp/
+*.tmp
+*.temp
+__pycache__/
+*.py[cod]
+.pytest_cache/
