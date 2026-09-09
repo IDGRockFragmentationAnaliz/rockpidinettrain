@@ -22,7 +22,7 @@ PROGRESS = True  # Показывать прогресс обработки кр
 
 CROP_SIZE = 350
 PAD_SIZE = 150
-BATCH_NUM = 4  # Количество кропов в батче; 1 — обычная обработка
+BATCH_NUM = 16  # Количество кропов в батче; 1 — обычная обработка
 SKELETON_LAM = 0
 SKELETON_THRESHOLD = 128
 F_SCORE_TOLERANCE_PX = 3
@@ -42,7 +42,7 @@ def get_checkpoint_path(project_path: Path) -> Path:
     return (
         model_dir
         / MODEL_NAME
-        / f"checkpoint_{CHECKPOINT_NUMBER:03d}_{MODEL_NAME}.pth"
+        / f"checkpoint_{CHECKPOINT_NUMBER:03d}.pth"
     )
 
 def main(*, use_pq: bool = False) -> None:
