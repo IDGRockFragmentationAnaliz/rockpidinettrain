@@ -3,6 +3,7 @@
 from pathlib import Path
 import tomllib
 
+import cv2
 import numpy as np
 
 from pygradskeleton import couprie
@@ -15,7 +16,7 @@ from storage_manager import Storage
 EDGES_SUFFIX = "_edges_bsds500"
 EDGES_SUBFOLDER = "ddn"
 
-THIN_EDGES_SUFFIX = "_bsds500"
+THIN_EDGES_SUFFIX = "_64_7"#"_bsds500"
 THIN_EDGES_SUBFOLDER = "ddn/edges_thin"
 
 EDGES_EXTENSION = "png"
@@ -49,12 +50,13 @@ def main(*, use_pq: bool = USE_PQ) -> None:
     scores: list[float] = []
     for folder in folders:
         storage = Storage.from_folder_path(folder)
-        edges = storage.load_grayscale(
-            suffix=EDGES_SUFFIX,
-            ext=EDGES_EXTENSION,
-            subfolder=EDGES_SUBFOLDER,
-        )
+        # edges = storage.load_grayscale(
+        #     suffix=EDGES_SUFFIX,
+        #     ext=EDGES_EXTENSION,
+        #     subfolder=EDGES_SUBFOLDER,
+        # )
         edges_thin = storage.load_grayscale(suffix=THIN_EDGES_SUFFIX, subfolder=THIN_EDGES_SUBFOLDER)
+        cv2.dilate()
 
         # edges_thin = couprie(
         #     edges,
@@ -74,13 +76,15 @@ def main(*, use_pq: bool = USE_PQ) -> None:
         edges_thin[image_mask == 0] = mask_value
         edges_gt[image_mask == 0] = mask_value
 
-        from matplotlib import pyplot as plt
-        fig = plt.figure()
-        ax1 = fig.add_subplot(1, 2, 1)
-        ax2 = fig.add_subplot(1, 2, 2)
-        ax1.imshow(edges_thin)
-        ax2.imshow(edges_gt)
-        plt.show()
+        # from matplotlib import pyplot as plt
+        # fig = plt.figure()
+        # ax1 = fig.add_subplot(1, 2, 1)
+        # ax2 = fig.add_subplot(1, 2, 2)
+        # ax1.imshow(edges_thin)
+        # ax2.imshow(edges_gt)
+        # ax2.sharex(ax1)
+        # ax2.sharey(ax1)
+        # plt.show()
 
         if use_pq:
             score = panoptic_quality(pred=edges_thin, gt=edges_gt)
