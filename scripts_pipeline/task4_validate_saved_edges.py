@@ -74,6 +74,14 @@ def main(*, use_pq: bool = USE_PQ) -> None:
         edges_thin[image_mask == 0] = mask_value
         edges_gt[image_mask == 0] = mask_value
 
+        from matplotlib import pyplot as plt
+        fig = plt.figure()
+        ax1 = fig.add_subplot(1, 2, 1)
+        ax2 = fig.add_subplot(1, 2, 2)
+        ax1.imshow(edges_thin)
+        ax2.imshow(edges_gt)
+        plt.show()
+
         if use_pq:
             score = panoptic_quality(pred=edges_thin, gt=edges_gt)
         else:
