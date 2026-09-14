@@ -1,6 +1,7 @@
 """Fine-tune DDN-M36 on the project's image/edge manifest."""
 
 import random
+import tomllib
 from pathlib import Path
 
 import numpy as np
@@ -22,7 +23,18 @@ from rockedgesdetectors.ddn.training import (
 # Training settings
 # ---------------------------------------------------------------------------
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
-TRAIN_MANIFEST = Path(r"D:\Data\Outcrops\train.lst")
+CONFIG_PATH = PROJECT_ROOT / "config.toml"
+
+
+def resolve_config_path(value: str) -> Path:
+    path = Path(value)
+    return path if path.is_absolute() else PROJECT_ROOT / path
+
+
+with CONFIG_PATH.open("rb") as config_file:
+    PATH_CONFIG = tomllib.load(config_file)
+
+TRAIN_MANIFEST = resolve_config_path(PATH_CONFIG["dataset"]["lst_path"])
 INITIAL_CHECKPOINT = PROJECT_ROOT / "models" / "ddn_bsds500.pth"
 RESUME_CHECKPOINT: Path | None = None
 CHECKPOINT_FOLDER = PROJECT_ROOT / "save_models" / "ddn"
