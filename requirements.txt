@@ -6,5 +6,6 @@ skan
 tqdm
 shapely
 opencv-contrib-python
+Pillow
 pyshp
 torchvision

@@ -13,12 +13,16 @@ from storage_manager import Storage
 
 # Настройки загружаемой карты
 EDGES_SUFFIX = "_edges_bsds500"
-EDGES_SUBFOLDER = "pidinet"
+EDGES_SUBFOLDER = "ddn"
+
+THIN_EDGES_SUFFIX = "_bsds500"
+THIN_EDGES_SUBFOLDER = "ddn/edges_thin"
+
 EDGES_EXTENSION = "png"
 MASK_SUBFOLDER = "areas"
 
 PROGRESS = True
-USE_PQ = False  # False — boundary F-score; True — panoptic quality
+USE_PQ = True  # False — boundary F-score; True — panoptic quality
 
 SKELETON_LAM = 0
 SKELETON_THRESHOLD = 128
@@ -50,13 +54,16 @@ def main(*, use_pq: bool = USE_PQ) -> None:
             ext=EDGES_EXTENSION,
             subfolder=EDGES_SUBFOLDER,
         )
-        edges_thin = couprie(
-            edges,
-            lam=SKELETON_LAM,
-            threshold=SKELETON_THRESHOLD,
-            progress=PROGRESS,
-        )
-        image_mask = mask_load(folder / MASK_SUBFOLDER, edges_thin.shape)
+        edges_thin = storage.load_grayscale(suffix=THIN_EDGES_SUFFIX, subfolder=THIN_EDGES_SUBFOLDER)
+
+        # edges_thin = couprie(
+        #     edges,
+        #     lam=SKELETON_LAM,
+        #     threshold=SKELETON_THRESHOLD,
+        #     progress=PROGRESS,
+        # )
+
+        image_mask = storage.load_mask()
         edges_gt = label_load(
             path=folder / "traces_gt" / "traces.shp",
             shape=edges_thin.shape,
