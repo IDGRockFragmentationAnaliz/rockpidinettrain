@@ -5,7 +5,9 @@ from dataclasses import dataclass
 from pathlib import Path
 
 import torch
+import torch.nn.functional as F
 from tqdm import tqdm
+from torchvision import tv_tensors
 
 from rocknetmanager import Sample, Tiler, save_tile
 from rocknetmanager.sample_transform import Rotate, horizontal_flip
@@ -38,6 +40,7 @@ ROTATION_ANGLES = (0, 90, 180, 270)
 INCLUDE_HORIZONTAL_FLIP = True
 
 LABEL_THICKNESS = 1
+LABEL_DILATION_RADIUS = 3  # 0 отключает расширение label.
 MIN_MASK_FRACTION = 0.5
 MIN_LABEL_PIXELS = 10
 
@@ -72,6 +75,7 @@ def main() -> None:
 		rotation_angles=ROTATION_ANGLES,
 		include_horizontal_flip=INCLUDE_HORIZONTAL_FLIP,
 		label_thickness=LABEL_THICKNESS,
+		label_dilation_radius=LABEL_DILATION_RADIUS,
 		min_mask_fraction=MIN_MASK_FRACTION,
 		min_label_pixels=MIN_LABEL_PIXELS,
 	)
@@ -181,6 +185,7 @@ def create_dataset(
 	rotation_angles: tuple[int, ...] = (0,),
 	include_horizontal_flip: bool = True,
 	label_thickness: int = 1,
+	label_dilation_radius: int = 0,
 	min_mask_fraction: float = 0.4,
 	min_label_pixels: int = 5,
 ) -> tuple[int, int]:
@@ -188,6 +193,7 @@ def create_dataset(
 		tile_size=tile_size,
 		rotation_angles=rotation_angles,
 		label_thickness=label_thickness,
+		label_dilation_radius=label_dilation_radius,
 		min_mask_fraction=min_mask_fraction,
 		min_label_pixels=min_label_pixels,
 	)
@@ -232,6 +238,10 @@ def create_dataset(
 			sample = Sample.load_sample(
 				sample_paths.as_dict(),
 				thickness=label_thickness,
+			)
+			sample["label"] = dilate_label(
+				sample["label"],
+				radius=label_dilation_radius,
 			)
 			sample["image"].masked_fill_(
 				sample["mask"] == 0,
@@ -298,6 +308,7 @@ def validate_build_parameters(
 	tile_size: tuple[int, int],
 	rotation_angles: tuple[int, ...],
 	label_thickness: int,
+	label_dilation_radius: int,
 	min_mask_fraction: float,
 	min_label_pixels: int,
 ) -> None:
@@ -312,11 +323,54 @@ def validate_build_parameters(
 	if label_thickness <= 0:
 		raise ValueError("label_thickness должен быть положительным")
 
+	if label_dilation_radius < 0:
+		raise ValueError("label_dilation_radius не может быть отрицательным")
+
 	if not 0 <= min_mask_fraction <= 1:
 		raise ValueError("min_mask_fraction должен находиться в [0, 1]")
 
 	if min_label_pixels < 0:
 		raise ValueError("min_label_pixels должен быть неотрицательным")
+
+
+def dilate_label(
+	label: torch.Tensor,
+	radius: int,
+) -> torch.Tensor:
+	"""Расширяет двумерный label круговым ядром на указанное число пикселей."""
+	if radius < 0:
+		raise ValueError("radius не может быть отрицательным")
+	if label.ndim != 2:
+		raise ValueError(
+			f"Ожидался двумерный label, получена форма {tuple(label.shape)}"
+		)
+	if radius == 0:
+		return label
+
+	coordinates = torch.arange(
+		-radius,
+		radius + 1,
+		device=label.device,
+	)
+	y, x = torch.meshgrid(
+		coordinates,
+		coordinates,
+		indexing="ij",
+	)
+	kernel = (
+		x.square() + y.square() <= radius ** 2
+	).to(torch.float32)
+
+	dilated = F.conv2d(
+		(label != 0).to(torch.float32).unsqueeze(0).unsqueeze(0),
+		kernel.unsqueeze(0).unsqueeze(0),
+		padding=radius,
+	)[0, 0] > 0
+
+	foreground_value = label.max()
+	dilated = dilated.to(label.dtype) * foreground_value
+
+	return tv_tensors.wrap(dilated, like=label)
 
 
 def is_accessible_tile(
