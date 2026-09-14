@@ -5,7 +5,7 @@ from pathlib import Path
 
 import torch
 
-from rockedgesdetectors import Cropper, DDN, NumpyDDNAdapter
+from rockedgesdetectors import Cropper, DDN, NumpyDDNAdapter, BatchedCropper, BlendingCropper
 from storage_manager import Storage
 
 
