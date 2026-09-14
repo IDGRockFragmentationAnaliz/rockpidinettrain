@@ -101,6 +101,28 @@ class Storage:
     def save_edges(self, edges: np.ndarray, ext: str = "png") -> None:
         self.save_grayscale(edges, suffix="_edges", ext=ext)
 
+    def load_mask(
+        self,
+        shape: tuple[int, ...] | None = None,
+        subfolder: str | Path | None = "areas",
+    ) -> np.ndarray:
+        """Загружает полигональный Shapefile как бинарную маску 0/255."""
+        from rocknetmanager.manager_shapefile.mask_load import mask_load
+
+        if shape is None:
+            shape = self.get_image_shape()
+        mask_path = self._resolve_subfolder(subfolder)
+        return mask_load(path=mask_path, shape=shape)
+
+    def get_image_shape(self) -> tuple[int, int]:
+        """Читает (height, width) из заголовка изображения без декодирования."""
+        from PIL import Image
+
+        image_path = self._resolve_image_path()
+        with Image.open(image_path) as image:
+            width, height = image.size
+        return height, width
+
     def load_image(self, size=None):
         self.image_path = self._resolve_image_path()
         if self.debug:
