@@ -5,6 +5,7 @@ import tomllib
 
 import cv2
 import numpy as np
+from skimage.morphology import disk
 
 from pygradskeleton import couprie
 from rocknetmanager.manager_shapefile import label_load, mask_load
@@ -16,18 +17,19 @@ from storage_manager import Storage
 EDGES_SUFFIX = "_edges_bsds500"
 EDGES_SUBFOLDER = "ddn"
 
-THIN_EDGES_SUFFIX = "_64_7"#"_bsds500"
+THIN_EDGES_SUFFIX = "_bsds500" #"_64_7"
 THIN_EDGES_SUBFOLDER = "ddn/edges_thin"
 
 EDGES_EXTENSION = "png"
 MASK_SUBFOLDER = "areas"
 
 PROGRESS = True
-USE_PQ = True  # False — boundary F-score; True — panoptic quality
+USE_PQ = False  # False — boundary F-score; True — panoptic quality
 
 SKELETON_LAM = 0
 SKELETON_THRESHOLD = 128
 F_SCORE_TOLERANCE_PX = 3
+DILATION_KERNEL = disk(6).astype(np.uint8)
 
 
 def main(*, use_pq: bool = USE_PQ) -> None:
@@ -50,20 +52,22 @@ def main(*, use_pq: bool = USE_PQ) -> None:
     scores: list[float] = []
     for folder in folders:
         storage = Storage.from_folder_path(folder)
-        # edges = storage.load_grayscale(
-        #     suffix=EDGES_SUFFIX,
-        #     ext=EDGES_EXTENSION,
-        #     subfolder=EDGES_SUBFOLDER,
-        # )
-        edges_thin = storage.load_grayscale(suffix=THIN_EDGES_SUFFIX, subfolder=THIN_EDGES_SUBFOLDER)
-        cv2.dilate()
+        edges = storage.load_grayscale(
+            suffix=EDGES_SUFFIX,
+            ext=EDGES_EXTENSION,
+            subfolder=EDGES_SUBFOLDER,
+        )
+        _, edges_bin = cv2.threshold(edges, 128, 255, cv2.THRESH_BINARY)
 
+        edges_thin = storage.load_grayscale(suffix=THIN_EDGES_SUFFIX, subfolder=THIN_EDGES_SUBFOLDER)
         # edges_thin = couprie(
         #     edges,
         #     lam=SKELETON_LAM,
         #     threshold=SKELETON_THRESHOLD,
         #     progress=PROGRESS,
         # )
+
+        #edges_thin = cv2.dilate(edges_thin, DILATION_KERNEL, iterations=1)
 
         image_mask = storage.load_mask()
         edges_gt = label_load(
@@ -76,15 +80,35 @@ def main(*, use_pq: bool = USE_PQ) -> None:
         edges_thin[image_mask == 0] = mask_value
         edges_gt[image_mask == 0] = mask_value
 
+        edges_overlay = cv2.cvtColor(edges_bin, cv2.COLOR_GRAY2RGB)
+        edges_overlay[edges_thin == 255] = (0, 0, 255)
+
         # from matplotlib import pyplot as plt
         # fig = plt.figure()
-        # ax1 = fig.add_subplot(1, 2, 1)
-        # ax2 = fig.add_subplot(1, 2, 2)
-        # ax1.imshow(edges_thin)
-        # ax2.imshow(edges_gt)
+        # ax1 = fig.add_subplot(1, 3, 1)
+        # ax2 = fig.add_subplot(1, 3, 2)
+        # ax3 = fig.add_subplot(1, 3, 3)
+        # ax1.imshow(edges_thin, cmap="gray")
+        # ax2.imshow(edges_gt, cmap="gray")
+        # ax3.imshow(edges_overlay)
+        # ax1.set_title("Thin edges")
+        # ax2.set_title("Ground truth")
+        # ax3.set_title("Binary edges + thin edges")
         # ax2.sharex(ax1)
         # ax2.sharey(ax1)
+        # ax3.sharex(ax1)
+        # ax3.sharey(ax1)
         # plt.show()
+
+        # fig = plt.figure()
+        # ax1 = fig.add_subplot(1, 1, 1)
+        # ax1.imshow(edges_overlay[2000:4000, 2000:4000,:])
+        # #ax1.set_xlim([2000, 4000])
+        # #ax1.set_ylim([2000, 4000])
+        # plt.show()
+        #
+        #
+        # exit()
 
         if use_pq:
             score = panoptic_quality(pred=edges_thin, gt=edges_gt)

@@ -18,9 +18,9 @@ def main():
 
 	for folder_path in dataset_path.iterdir():
 		storage = Storage.from_folder_path(folder_path)
-		edges = storage.load_grayscale(suffix="_edges_128_020", subfolder="rcf")
-		edges_thin = couprie(edges, lam=0, threshold=128, progress=True)
-		storage.save_grayscale(edges_thin, suffix="_128",subfolder="rcf/edges_thin")
+		edges = storage.load_grayscale(suffix="_edges_64_4_2", subfolder="ddn")
+		edges_thin = couprie(edges, lam=5, threshold=128, progress=True)
+		storage.save_grayscale(edges_thin, suffix="_64_4_2",subfolder="ddn/edges_thin")
 
 
 if __name__ == "__main__":

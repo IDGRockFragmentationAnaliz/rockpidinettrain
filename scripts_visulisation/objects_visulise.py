@@ -11,8 +11,8 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 # Настройки запуска.
 INPUT_IMAGE_PATH = Path(
-    r"D:\Data\Outcrops\handmark\IMGP3353-3355\pidinet\edges_thin"
-    r"\IMGP3353-3355_bsds500.png"
+    r"D:\Data\Outcrops\handmark\IMGP3353-3355\ddn\edges_thin"
+    r"\IMGP3353-3355_64.png"
 )
 OUTPUT_IMAGE_PATH = PROJECT_ROOT / "IMGP3353-3355_bsds500_closed_4_connected.png"
 THRESHOLD: int | None = None  # None — определить автоматически методом Otsu.
