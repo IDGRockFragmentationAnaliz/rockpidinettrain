@@ -11,10 +11,9 @@ PROJECT_ROOT = Path(__file__).resolve().parents[1]
 
 # Настройки запуска.
 INPUT_IMAGE_PATH = Path(
-    r"D:\Data\Outcrops\handmark\IMGP3353-3355\ddn\edges_thin"
-    r"\IMGP3353-3355_64.png"
+    r"D:\Data\Outcrops\handmark\IMGP3353-3355\ddn\64\edges_thin\IMGP3353-3355_edges_4.png"
 )
-OUTPUT_IMAGE_PATH = PROJECT_ROOT / "IMGP3353-3355_bsds500_closed_4_connected.png"
+OUTPUT_IMAGE_PATH = PROJECT_ROOT / "IMGP3353-3355_4.png"
 THRESHOLD: int | None = None  # None — определить автоматически методом Otsu.
 RANDOM_SEED: int | None = None  # Укажите число для повторяемых цветов.
 

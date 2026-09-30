@@ -18,7 +18,8 @@ def main() -> None:
     if not dataset_path.is_absolute():
         dataset_path = project_path / dataset_path
 
-    checkpoint_path = project_path / "models" / "bsds500_pascal_model.pth"
+    # checkpoint_path = project_path / "models" / "models_rcf" / "rcf_bsds500.pth"
+    checkpoint_path = project_path / "models" / "models_rcf" / "50_16" / "checkpoint_010.pth"
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     module = RCFBSDS(checkpoint_path).to(device).eval()
     model = Cropper(
@@ -34,7 +35,7 @@ def main() -> None:
             continue
         storage = Storage.from_folder_path(folder_path)
         edges = model(storage.load_image())
-        storage.save_grayscale(edges, suffix="_edges_rcf")
+        storage.save_grayscale(edges, suffix="_50_16", subfolder="rcf/edges")
 
 
 if __name__ == "__main__":

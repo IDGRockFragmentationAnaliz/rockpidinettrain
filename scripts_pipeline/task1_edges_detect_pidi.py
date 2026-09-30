@@ -23,17 +23,17 @@ def main():
 	if not dataset_path.is_absolute():
 		dataset_path = project_path / dataset_path
 
-	checkpoint_path = "../models/models_pidinet/pidinet_1.pth"
-	#checkpoint_path = Path(r"D:\Data\Outcrops\models\save_models\checkpoint_000.pth")
+	# checkpoint_path = "../models/models_pidinet/pidinet_bsds500.pth"
+	checkpoint_path = Path(r"../models/models_pidinet/50_16/checkpoint_005.pth")
 
 	model = create_pidinet_adapter(checkpoint_path)
-	model = Cropper(model, crop=512, pad=64)
+	model = Cropper(model, crop=512, pad=128, display=True)
 
 	for folder_path in dataset_path.iterdir():
 		storage = Storage.from_folder_path(folder_path)
 		image = storage.load_image()
 		edges = model(image)
-		storage.save_grayscale(edges, suffix="_edges_pidi_1")
+		storage.save_grayscale(edges, suffix="_50_16", subfolder="pidinet/edges")
 
 
 def create_pidinet_adapter(checkpoint_path):

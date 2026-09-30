@@ -31,7 +31,8 @@ def main() -> None:
     if not dataset_path.is_absolute():
         dataset_path = project_path / dataset_path
 
-    checkpoint_path = project_path / "models" / "models_ddn"  / "ddn_bsds500.pth"
+    #vcheckpoint_path = project_path / "models" / "models_ddn"  / "ddn_bsds500.pth"
+    checkpoint_path = project_path / "models" / "models_ddn" / "50_16" / "checkpoint_013.pth"
     model = load_model(checkpoint_path)
     model = BlendingCropper(
         model,
@@ -51,7 +52,7 @@ def main() -> None:
         # Уменьшаем в 2 раза
         image = cv2.resize(
             image,
-            (width // 8, height // 8),
+            (width // 1, height // 1),
             interpolation=cv2.INTER_AREA
         )
 
@@ -65,7 +66,7 @@ def main() -> None:
         )
         edges = normalize_image_min_max(edges)
 
-        storage.save_grayscale(edges, suffix="_edges_8", subfolder="ddn/bsds500")
+        storage.save_grayscale(edges, suffix="_50_16", subfolder="ddn/edges")
 
 def load_model(checkpoint_path: Path):
     model = DDN(checkpoint_path).cuda().eval()
