@@ -2,17 +2,23 @@
 
 from __future__ import annotations
 
+import sys
 from pathlib import Path
 
 import cv2
 import numpy as np
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
+
+from storage_manager import Storage
 
 # Настройки запуска.
 INPUT_IMAGE_PATH = Path(
-    r"D:\Data\Outcrops\handmark\IMGP3353-3355\ddn\64\edges_thin\IMGP3353-3355_edges_4.png"
+    r"D:\Data\Outcrops\handmark\IMGP3353-3355\rcf\edges_thin\IMGP3353-3355_50_16.png"
 )
+SAMPLE_FOLDER = Path(r"D:\Data\Outcrops\handmark\IMGP3353-3355")
 OUTPUT_IMAGE_PATH = PROJECT_ROOT / "IMGP3353-3355_4.png"
 THRESHOLD: int | None = None  # None — определить автоматически методом Otsu.
 RANDOM_SEED: int | None = None  # Укажите число для повторяемых цветов.
@@ -87,6 +93,23 @@ def color_regions(
     return result
 
 
+def regions_inside_mask(
+    labels: np.ndarray, closed_labels: list[int], mask: np.ndarray
+) -> list[int]:
+    """Оставить только объекты, полностью лежащие внутри маски."""
+    if labels.shape != mask.shape:
+        raise ValueError(
+            f"Размер маски {mask.shape} не совпадает с изображением {labels.shape}"
+        )
+    if not closed_labels:
+        return []
+
+    outside_counts = np.bincount(
+        labels[mask == 0], minlength=int(labels.max()) + 1
+    )
+    return [label for label in closed_labels if outside_counts[label] == 0]
+
+
 def main() -> None:
     grayscale = cv2.imread(str(INPUT_IMAGE_PATH), cv2.IMREAD_GRAYSCALE)
     if grayscale is None:
@@ -97,13 +120,18 @@ def main() -> None:
     labels, closed_labels, edge_mask = find_closed_regions(
         grayscale, THRESHOLD
     )
-    result = color_regions(labels, closed_labels, edge_mask, RANDOM_SEED)
+    storage = Storage.from_folder_path(SAMPLE_FOLDER)
+    mask = storage.load_mask(shape=grayscale.shape)
+    kept_labels = regions_inside_mask(labels, closed_labels, mask)
+    result = color_regions(labels, kept_labels, edge_mask, RANDOM_SEED)
+    result[mask == 0] = (0, 0, 0)
 
     OUTPUT_IMAGE_PATH.parent.mkdir(parents=True, exist_ok=True)
     if not cv2.imwrite(str(OUTPUT_IMAGE_PATH), result):
         raise OSError(f"Не удалось сохранить изображение: {OUTPUT_IMAGE_PATH}")
 
     print(f"Найдено замкнутых областей: {len(closed_labels)}")
+    print(f"Полностью внутри маски: {len(kept_labels)}")
     print(f"Результат сохранён: {OUTPUT_IMAGE_PATH}")
 
 
